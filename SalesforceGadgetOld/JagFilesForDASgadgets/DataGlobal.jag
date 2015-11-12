@@ -1,0 +1,325 @@
+<%
+
+if(request.getMethod() == "POST"){
+ var year = request.getParameter("entYear");
+ var Quarter=request.getParameter("Quarter");
+ var Month=request.getParameter("Month");
+ var FullYear=request.getParameter("FullYear");
+ var AccManager=request.getParameter("AccManager");
+}
+
+if(FullYear=="false"){
+    //Projects with Snapshot_Date__c in current year which are open
+
+    if(Quarter=="false"){
+        if(AccManager=="none"){
+                var queryOpen =  "select sum(Best_Case__c) as 'Best',sum(Expected_Case__c) as 'Expected',sum(Worst_Case__c) as 'Worst',WEEKOFYEAR(Snapshot_Date__c) as 'weekNo' FROM OpportunityTrend WHERE YEAR(Snapshot_Date__c)="+year+" AND MONTH(Snapshot_Date__c)="+Month+" AND Opportunity_Status__c='Open' group by weekNo";
+        
+                //Projects with Snapshot_Date__c in current year which are closed won
+        
+                var queryClosedWon =  "select Opportunity_Status__c,WEEKOFYEAR(Snapshot_Date__c) as 'weekNo', sum(Amount_Converted__c) as 'Amount' FROM OpportunityTrend WHERE YEAR(Snapshot_Date__c)="+year+" AND MONTH(Snapshot_Date__c)="+Month+" AND Opportunity_Status__c='Closed Won' group by weekNo";
+        }
+        else{
+
+                var queryOpen =  "select sum(Best_Case__c) as 'Best',sum(Expected_Case__c) as 'Expected',sum(Worst_Case__c) as 'Worst',WEEKOFYEAR(Snapshot_Date__c) as 'weekNo' FROM OpportunityTrend WHERE YEAR(Snapshot_Date__c)="+year+" AND MONTH(Snapshot_Date__c)="+Month+" AND Account_Owner__c='"+AccManager+"' AND Opportunity_Status__c='Open' group by weekNo";
+        
+                //Projects with Snapshot_Date__c in current year which are closed won
+        var queryClosedWon =  "select Opportunity_Status__c,WEEKOFYEAR(Snapshot_Date__c) as 'weekNo', sum(Amount_Converted__c) as 'Amount' FROM OpportunityTrend WHERE YEAR(Snapshot_Date__c)="+year+" AND MONTH(Snapshot_Date__c)="+Month+" AND Account_Owner__c='"+AccManager+"' AND Opportunity_Status__c='Closed Won' group by weekNo";
+                //var queryClosedWon =  "select o.Opportunity_Status__c,WEEKOFYEAR(o.Snapshot_Date__c) as 'weekNo', sum(o.Amount_Converted__c) as 'Amount' FROM OpportunityTrend o, AMpipeline am WHERE YEAR(o.Snapshot_Date__c)="+year+" AND MONTH(o.Snapshot_Date__c)="+Month+" AND o.OwnerId="+AccManagerId+" AND o.OwnerId=am.OwnerId AND o.Opportunity_Status__c='Closed Won' group by weekNo";
+        
+        }
+    }
+    else{
+        var queryOpen =  "select sum(Best_Case__c) as 'Best',sum(Expected_Case__c) as 'Expected',sum(Worst_Case__c) as 'Worst',WEEKOFYEAR(Snapshot_Date__c) as 'weekNo' FROM OpportunityTrend WHERE YEAR(Snapshot_Date__c)="+year+" AND QUARTER(Snapshot_Date__c)="+Quarter+" AND Opportunity_Status__c='Open' group by weekNo";
+
+        //Projects with Snapshot_Date__c in current year which are closed won
+
+        var queryClosedWon =  "select Opportunity_Status__c,WEEKOFYEAR(Snapshot_Date__c) as 'weekNo', sum(Amount_Converted__c) as 'Amount' FROM OpportunityTrend WHERE YEAR(Snapshot_Date__c)="+year+" AND QUARTER(Snapshot_Date__c)="+Quarter+" AND Opportunity_Status__c='Closed Won' group by weekNo";
+    }
+
+}
+else if(FullYear=="true"){
+
+    //Projects with Snapshot_Date__c in current year which are open
+
+    var queryOpen =  "select sum(Best_Case__c) as 'Best',sum(Expected_Case__c) as 'Expected',sum(Worst_Case__c) as 'Worst',WEEKOFYEAR(Snapshot_Date__c) as 'weekNo' FROM OpportunityTrend WHERE YEAR(Snapshot_Date__c)="+year+" AND Opportunity_Status__c='Open' group by weekNo";
+    //YEAR(CURRENT_DATE)
+    //QUARTER(CURRENT_DATE)
+
+    //Projects with Snapshot_Date__c in current year which are closed won
+
+    var queryClosedWon =  "select Opportunity_Status__c,WEEKOFYEAR(Snapshot_Date__c) as 'weekNo', sum(Amount_Converted__c) as 'Amount' FROM OpportunityTrend WHERE YEAR(Snapshot_Date__c)="+year+" AND Opportunity_Status__c='Closed Won' group by weekNo";
+}
+
+//Date Functions
+
+//function to get the week number for a date object
+//var dateobj=new Date('January 21,2015');
+//dateobj.getWeek();
+Date.prototype.getWeek = function() {
+  var date = new Date(this.getTime());
+   date.setHours(0, 0, 0, 0);
+  // Thursday in current week decides the year.
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  // January 4 is always in week 1.
+  var week1 = new Date(date.getFullYear(), 0, 4);
+  // Adjust to Thursday in week 1 and count number of weeks from date to week1.
+  return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000
+                        - 3 + (week1.getDay() + 6) % 7) / 7);
+}
+/*
+Parameters:
+index: n'th occurrence of the specified day
+day: daynumber - javascript way where sunday is 0 and is saturday is 6
+month: javascript way which is 0-11 [optional - defaults to current]
+year: Full year - four digits [optional - defaults to current]
+*/
+function getNthDayOfMonth(index,day,month,year){
+// Create date object
+var date = new Date();
+// Set to first day of month
+date.setDate(1);
+// If supplied - set the month  
+if(month!==''&&month!==undefined){
+    // Set month
+    date.setMonth(month);
+}else{
+    month = date.getMonth();
+}
+// If supplied - set the year   
+if(year!==''&&year!==undefined){
+    // Set year
+    date.setFullYear(year);
+}else{
+    year = date.getFullYear();
+}
+// Find daynumber
+firstDay = date.getDay();
+// Find first friday.
+while(date.getDay()!=day){      
+    date.setDate(date.getDate()+1) ;
+}
+switch(index){
+    case 2:
+        date.setDate(date.getDate()+7);         
+    break;
+    case 3:
+        date.setDate(date.getDate()+14);                
+    break;
+    case 4:
+        date.setDate(date.getDate()+21);
+    break;
+    case 5:
+        date.setDate(date.getDate()+28);
+        if(date.getMonth()!==month){
+            date = null;
+        }
+    break;
+}
+return date;
+}
+//function to get last friday in a month
+//month:from 0-11
+function getLastFriday(y,m){
+var monthNames = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
+var d=new Date(y,m+1,1);    //first day of next month (month based 0)
+var ddiff=(d.getDay()+1)%7+1;    //day difference to subtract
+var d_lastfriday=new Date(y,m+1,1-ddiff);
+return (monthNames[d_lastfriday.getMonth()]+" "+d_lastfriday.getDate()+","+y);
+}
+
+var DataProductPipeline=[];
+var db = new Database("jdbc:mysql://localhost:3306/sf", "root", "root");
+try{
+    var week;
+    if(FullYear=="true"){
+        for(week=1;week<53;week++){
+            DataProductPipeline[week] = ["Closed Won", week, 0.0];
+        }
+    }
+    else if(FullYear=="false"){
+        if(Month=="false"){       
+            if(Quarter=='1'){
+                for(week=1;week<14;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+            if(Quarter=='2'){
+                for(week=14;week<27;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+            if(Quarter=='3'){
+                for(week=27;week<40;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+            if(Quarter=='4'){
+                for(week=40;week<53;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+        }
+        else{
+            if(Month=='1'){
+                var mydate = new Date(getNthDayOfMonth(1,5,0,year));
+                startWeek=mydate.getWeek();
+                mydate = new Date(getLastFriday(year,0));
+                endWeek=mydate.getWeek();
+                for(week=startWeek;week<=endWeek;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+            else if(Month=='2'){
+                var mydate = new Date(getNthDayOfMonth(1,5,1,year));
+                startWeek=mydate.getWeek();
+                mydate = new Date(getLastFriday(year,1));
+                endWeek=mydate.getWeek();
+                for(week=startWeek;week<=endWeek;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+            else if(Month=='3'){
+                var mydate = new Date(getNthDayOfMonth(1,5,2,year));
+                startWeek=mydate.getWeek();
+                mydate = new Date(getLastFriday(year,2));
+                endWeek=mydate.getWeek();
+                for(week=startWeek;week<=endWeek;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            } 
+            else if(Month=='4'){
+                var mydate = new Date(getNthDayOfMonth(1,5,3,year));
+                startWeek=mydate.getWeek();
+                mydate = new Date(getLastFriday(year,3));
+                endWeek=mydate.getWeek();
+                for(week=startWeek;week<=endWeek;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+            else if(Month=='5'){
+                var mydate = new Date(getNthDayOfMonth(1,5,4,year));
+                startWeek=mydate.getWeek();
+                mydate = new Date(getLastFriday(year,4));
+                endWeek=mydate.getWeek();
+                for(week=startWeek;week<=endWeek;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+            else if(Month=='6'){
+                var mydate = new Date(getNthDayOfMonth(1,5,5,year));
+                startWeek=mydate.getWeek();
+                mydate = new Date(getLastFriday(year,5));
+                endWeek=mydate.getWeek();
+                for(week=startWeek;week<=endWeek;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+            else if(Month=='7'){
+                var mydate = new Date(getNthDayOfMonth(1,5,6,year));
+                startWeek=mydate.getWeek();
+                mydate = new Date(getLastFriday(year,6));
+                endWeek=mydate.getWeek();
+                for(week=startWeek;week<=endWeek;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+            else if(Month=='8'){
+                var mydate = new Date(getNthDayOfMonth(1,5,7,year));
+                startWeek=mydate.getWeek();
+                mydate = new Date(getLastFriday(year,7));
+                endWeek=mydate.getWeek();
+                for(week=startWeek;week<=endWeek;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+            else if(Month=='9'){
+                var mydate = new Date(getNthDayOfMonth(1,5,8,year));
+                startWeek=mydate.getWeek();
+                mydate = new Date(getLastFriday(year,8));
+                endWeek=mydate.getWeek();
+                for(week=startWeek;week<=endWeek;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+            else if(Month=='10'){
+                var mydate = new Date(getNthDayOfMonth(1,5,9,year));
+                startWeek=mydate.getWeek();
+                mydate = new Date(getLastFriday(year,9));
+                endWeek=mydate.getWeek();
+                for(week=startWeek;week<=endWeek;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+            else if(Month=='11'){
+                var mydate = new Date(getNthDayOfMonth(1,5,10,year));
+                startWeek=mydate.getWeek();
+                mydate = new Date(getLastFriday(year,10));
+                endWeek=mydate.getWeek();
+                for(week=startWeek;week<=endWeek;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+            else if(Month=='12'){
+                var mydate = new Date(getNthDayOfMonth(1,5,11,year));
+                startWeek=mydate.getWeek();
+                mydate = new Date(getLastFriday(year,11));
+                endWeek=mydate.getWeek();
+                for(week=startWeek;week<=endWeek;week++){
+                    DataProductPipeline[week] = ["Closed Won", week, 0.0];
+            }
+            }
+        }
+        
+    }
+    
+
+    var resultClosedWon = db.query(queryClosedWon);
+    for (var j = 0; j < resultClosedWon.length; j++) {
+    DataProductPipeline[resultClosedWon[j].weekNo] = [resultClosedWon[j].Opportunity_Status__c,resultClosedWon[j].weekNo,(resultClosedWon[j].Amount)/1000000.0];
+                }
+    var bestRes;
+    var expectedRes;
+    var WorstCase;
+    var BestCase;
+    var ExpectedCase;
+
+    var resultOpen = db.query(queryOpen);
+    for (var z=0 ; z < resultOpen.length; z++) {
+        sumBestCase=0;          //sum of best case for that week
+        sumExpectedCase=0;      //sum of expected case for that week
+        BestCase=0;             //Amount of best case for that week for the graph
+        ExpectedCase=0;         //sum of expected case for that week for the graph
+        WorstCase=0;            //sum of worst case for that week
+        
+        sumBestCase=resultOpen[z].Best;
+        sumExpectedCase=resultOpen[z].Expected;
+        WorstCase= resultOpen[z].Worst;
+
+        BestCase= sumBestCase - sumExpectedCase;
+        if(WorstCase==null){
+            WorstCase=0.0;
+        }
+        if(sumExpectedCase!=null){
+            ExpectedCase= sumExpectedCase - WorstCase;
+        }
+
+        //var f=3*z+j;
+            DataProductPipeline[week++] = ["Best Case",resultOpen[z].weekNo,BestCase/1000000.0];   
+            DataProductPipeline[week++] = ["Expected Case",resultOpen[z].weekNo,ExpectedCase/1000000.0];     
+            DataProductPipeline[week++] = ["Worst Case",resultOpen[z].weekNo,WorstCase/1000000.0];
+
+
+        }
+
+}
+catch(e){
+    
+}
+response.addHeader("Access-Control-Allow-Origin", "*");
+print(stringify(DataProductPipeline));
+
+%>

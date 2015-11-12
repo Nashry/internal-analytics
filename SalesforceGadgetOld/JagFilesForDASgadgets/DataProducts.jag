@@ -1,0 +1,34 @@
+<%
+
+if(request.getMethod() == "POST"){
+ var year = request.getParameter("entYear");
+}
+
+var queryProduct ="SELECT DISTINCT Products_in_use__c, count(Id) as 'Count' FROM products WHERE FiscalYear="+year+" AND Products_in_use__c!='null' GROUP BY Products_in_use__c";
+//actual table is pipeline
+
+
+var db = new Database("jdbc:mysql://localhost:3306/sf", "root", "root");
+try{
+var resultProduct = db.query(queryProduct);
+var DataProduct=[];
+
+var f=0;
+                for (var i = 0; i < resultProduct.length; i++) {
+                    prodstring=resultProduct[i].Products_in_use__c;
+                    var parts=prodstring.split("\;");
+                    var lengthParts=parts.length;
+                    for(var j=0;j<lengthParts;j++){
+                        
+                        DataProduct[f++] = [parts[j],parseInt(resultProduct[i].Count)];
+                    } 
+                }    
+}
+catch(e){
+    
+}
+
+response.addHeader("Access-Control-Allow-Origin", "*");
+print(stringify(DataProduct));
+
+%>
