@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+    <ModulePrefs title="AMPerformanceQtr" height="250" description="sub-productBar">
+        <Require feature="pubsub-2">
+            <Param name="topics">
+                <![CDATA[
+                <Topic title="geodata"
+                    name="org.wso2.ues.samples2.ch"
+                    description="sample channel to demonstrate intergadget communication"
+                    type="object"
+                    subscribe="true"/>
+               ]]>
+            </Param>
+        </Require>
+        <Require feature="dynamic-height"/>
+    </ModulePrefs>
+    <Content type="html">
+        <![CDATA[
+        <head>
+            <link rel="stylesheet" href="/portal/css/igviz.css">
+            <link rel="stylesheet" href="/portal/css/bootstrap.min.css">
+            <link rel="stylesheet" href="/portal/css/charts.css">
+            <script src="/portal/js/jquery.min.js"></script>
+            <script src="/portal/js/bootstrap.min.js"></script>
+            <script src="/portal/js/date.js"></script>
+            <script src="/portal/js/d3.min.js"> </script>
+            <script src="/portal/js/vega.js"> </script>
+            <script src="/portal/js/igviz.js"> </script>
+            <script language="javascript" type="text/javascript" src="/portal/js/jquery-1.10.2.js"></script>
+            <script>
+
+            //POST data to hosted jaggery files
+                $.post( "http://10.100.4.35:9763/hostedForGadgets/DataOppByCloseDate.jag",{}, function( data ) {
+                //Get the data from hosted jaggery files and parse it     
+                    var result = JSON.parse(data);
+                    DrawGraph(result["DataWo"]);                           
+                });
+            
+            //function to draw graph    
+                function DrawGraph(Data){
+                    var records = Data;
+                    var date = new Date();
+                    var wonData = [];                   // [Date, Closed Won Amount, Closed Won Count, AM]; Used for area graph
+                    var ytdData = new Object();         // Year to Date Closed Won Deal Value
+                    var thisQuarterData = new Object(); // This Quarter Closed Won Deal Value
+                    var ytdCount = new Object();        // Year to Date Closed Won Deal Count
+                    var thisQuarterCount = new Object(); // This Quarter Closed Won Deal Count
+                    var closedate = new Date();
+                    var oppEndDate = new Date();
+                    var n = 2, m =6, amount=0, j=0;
+                    var ytdTable = [];                  // [AM, YTD Closed Won Amount, YTD Closed Won Count]; Used for AM YTD Table;
+                    var qtrTable = [];                  // [AM, QTR Closed Won Amount, QTR Closed Won Count]; Used for AM Quarter Table;
+                    var histDate = new Date(n.years().ago()); // 2 years ago from today
+                    var yfwdate = new Date(m.months().fromNow()); // 6 months from today
+                    var firstDayQuarter = new Date(date.getFullYear(), (Math.floor((date.getMonth() + 3) / 3)-1)*3, 1); // First day of this Quarter
+                    var firstDayYear = new Date(date.getFullYear(), 0,1); // First day of this year
+                    var datestr;
+                    var owner;
+                        
+                    for (var i=0 ; i < records.length; i++) {
+                        
+                        oppEndDate = Date.parse(records[i][5]);
+                        closedate = Date.parse(records[i][4]);
+                        amount = Math.ceil(Number(records[i][1]));
+                        owner = records[i][3];
+                        
+                        if (isNaN(amount)) {
+                            amount = 0;
+                        }                                       
+                        if (ytdData[owner] == null) {
+                            ytdData[owner] = 0
+                            ytdCount[owner] = 0;
+                        }
+                        if (thisQuarterData[owner] == null) {
+                            thisQuarterData[owner] = 0;
+                            thisQuarterCount[owner] = 0;
+                        }
+
+                        if (oppEndDate > firstDayYear) {
+                            
+                            ytdData[owner] += amount ; 
+                            ytdCount[owner] += 1 ; 
+                        }
+                        if (oppEndDate > firstDayQuarter) {
+                            thisQuarterData[owner] += amount ; 
+                            thisQuarterCount[owner] += 1 ;
+                        }
+                        if ((histDate < closedate ) && (closedate < yfwdate)) {
+                        
+                            datestr = ""+closedate.getFullYear()+"-"+(closedate.getMonth()+1)+"-"+01+"";
+                            wonData[j++] = [datestr, amount, 1, owner ];
+                        }                 
+                    }
+                    var qkeys = Object.keys(ytdData);
+                    
+                    for( var j in qkeys) {
+                        ytdTable[j] = [qkeys[j], ytdData[qkeys[j]], ytdCount[qkeys[j]]];
+                        qtrTable[j] = [qkeys[j], thisQuarterData[qkeys[j]], thisQuarterCount[qkeys[j]]];
+                    }
+
+                    qtrTable.sort(function(a,b) { 
+                        var x=a[0];
+                        var y=b[0];
+                        return y-x; 
+                    } );
+                // Drawing AM Tables
+                    ytdTable.sort(function(a,b) { 
+                            var x=a[1];
+                            var y=b[1];
+                            return y-x; 
+                    } );
+                    qtrTable.sort(function(a,b) { 
+                            var x=a[1];
+                            var y=b[1];
+                            return y-x; 
+                    } );
+
+                                
+                    var AMQtrTable = {
+                        "metadata":{
+                            "names":["Account Manager","Amount","Count"],
+                            "types":['C', 'N', 'N']
+                        },
+                        "data": qtrTable
+                    }
+                    var tableConfigColorBased = {
+                        "title": "AM Performance",
+                        "xAxis": 1,
+                        "padding": 60,
+                        "width": 800,
+                        "height": 500,
+                        "chartType": "table",
+                        "colorBasedStyle": true
+                    }
+                //Drawing table in the div id=amQtr
+                    var obj1 = igviz.draw("#amQtr",tableConfigColorBased,AMQtrTable);
+                }
+            </script>
+        <head>
+        <body padding="0px">          
+            <div id="amQtr" class="col-lg-6" align="left" style="padding:0px;width:500px"></div>
+            </body>
+        ]]>
+    </Content>
+</Module>

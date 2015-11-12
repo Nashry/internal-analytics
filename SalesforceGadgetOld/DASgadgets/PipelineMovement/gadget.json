@@ -1,0 +1,20 @@
+{
+    "id": "PipelineMovement",
+    "title": "Pipeline Movement",
+    "type": "gadget",
+    "thumbnail": "store://gadget/usa-business-revenue/index.png",
+    "data": {
+        "url": "store://gadget/PipelineMovement/index.xml"
+    },
+    "listen": {
+        "state-selected": {
+            "type": "address",
+            "description": "Used to filter based on state"
+        },
+
+        "auto-update": {
+            "type": "boolean",
+            "description": "Used to filter based on state"
+        }
+    }
+}
