@@ -1,0 +1,15 @@
+The gadgets in this folder can be deployed by the following steps:
+
+1)Take a snapshot of the Opportunity_Trend__c object in salesforce and store in the database with table name 'OpportunityTrend'. 
+Use the same names as in salesforce for the columns.
+The db URL needs to be modified according to user's db.
+    eg:-var db = new Database("jdbc:mysql://localhost:3306/sf", "root", "root");
+    
+2)Place the gadgets in wso2das-home/repository/deployment/server/jaggeryapps/portal/store/carbon.super/gadget
+3)Change the url of the jquery post method to the user's jaggery server url
+eg:-$.post( "http://10.100.4.35:9763/hostedForGadgets/DataProducts.jag", 
+                            {"entYear":input[0]},function( data ) {
+                                DrawGraph(data);
+                        });
+4)Create a folder called 'hostedForGadgets' and place the jaggery files in jaggery-0.9.0-SNAPSHOT/apps/hostedForGadgets
+5)Run the DAS and jaggery server's and use the gadgets
