@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+    <ModulePrefs title="Date-gadget" height="250" description="Date-gadget">
+        <Require feature="pubsub-2"/>
+        <Require feature="dynamic-height"/>
+    </ModulePrefs>
+    <Content type="html">
+        <![CDATA[
+        <head>
+            <script language="javascript" type="text/javascript" src="/portal/js/jquery-1.10.2.js"></script>
+            <script>
+            //function used to hide and make visible the dropdowns in the filter gagdet- pubgadget
+                function DisableDropdown(){
+                    
+                    var year = document.getElementById("select_Year").value;
+                                
+                    if(document.getElementById("check_Year").checked)
+                    {
+                        var fullYear ="true";
+                        var newquarter ="false"; 
+                        var newMonth = "false";
+                        document.getElementById("check_Quarter").style.visibility = "visible";
+                        document.getElementById("pcheckquarter").style.visibility = "visible";        
+                        document.getElementById("select_Quarter").style.visibility = "hidden";
+                        document.getElementById("pquarter").style.visibility = "hidden";
+                        document.getElementById("pmonth").style.visibility = "hidden";
+                    }
+                    else if(document.getElementById("check_Quarter").checked)
+                    {   
+                        var fullYear ="false"; 
+                        var newquarter = document.getElementById("select_Quarter").value;
+                        var newMonth = "false";
+                        document.getElementById("select_Quarter").style.visibility = "visible";
+                        document.getElementById("pcheckquarter").style.visibility = "visible";
+                        document.getElementById("check_Quarter").style.visibility = "visible";
+                        document.getElementById("pquarter").style.visibility = "visible";
+                        document.getElementById("pmonth").style.visibility = "hidden";
+                    }
+                    else if(document.getElementById("check_Month").checked)
+                    { 
+                        var fullYear ="false";    
+                        var newquarter ="false"; 
+                        var newMonth = document.getElementById("select_Month").value;
+                        document.getElementById("pcheckquarter").style.visibility = "visible";
+                        document.getElementById("select_Quarter").style.visibility = "hidden";
+                        document.getElementById("check_Quarter").style.visibility = "visible";
+                        document.getElementById("pquarter").style.visibility = "hidden";
+                        document.getElementById("pmonth").style.visibility = "visible";        
+                        }  
+                //Publish the necessary variables below. 'select' is the channel name.
+                    gadgets.Hub.publish('select', {
+                            year: year,
+                            fullYear:fullYear,
+                            quarter:newquarter,
+                            month:newMonth
+                                            });
+                }
+            </script>
+        <head>
+        <body onLoad="DisableDropdown()">
+            <br>
+            <div align="center">
+            
+            <!--Radio buttons to select the time of filter (by year/ by quarter/ by month)  -->  
+                <input type="radio" name="check" id="check_Year" value="Year" onclick="DisableDropdown()" checked>Display by Year
+                <p id=pcheckquarter><input type="radio" name="check" id="check_Quarter" value="Quarter" onclick="DisableDropdown()">Display by Quarter</p>
+                <input type="radio" name="check" id="check_Month" value="Month" onclick="DisableDropdown()">Display by Month
+
+            <!--Dropdown to select the year-->
+                <p id="selectYear">Select Year:
+                <select id="select_Year" onChange="DisableDropdown()">
+                    <option name="2014" selected="selected">2014</option>
+                    <option name="2015">2015</option>
+                    <option name="2016">2016</option>
+                    <option name="2017">2017</option>
+                    <option name="2018">2018</option>
+                    <option name="2019">2019</option>
+                    <option name="2020">2020</option>
+                </select> </p>
+
+                <!--Dropdown to select the quarter-->
+                <p id="pquarter">Select Quarter:
+                <select id="select_Quarter" onChange="DisableDropdown()">
+                    <option name="1">1</option>
+                    <option name="2">2</option>
+                    <option name="3" selected="selected">3</option>
+                    <option name="4">4</option>
+                </select> </p>
+
+                <!--Dropdown to select the month-->
+                <p id="pmonth">Select Month:   
+                <select id="select_Month" onChange="DisableDropdown()">
+                    <option name="January" value="1">January</option>
+                    <option name="February" value="2">February</option>
+                    <option name="March" value="3">March</option>
+                    <option name="April" value="4">April</option>
+                    <option name="May" value="5">May</option>
+                    <option name="June" value="6">June</option>
+                    <option name="July" value="7" selected="selected">July</option>
+                    <option name="August" value="8">August</option>
+                    <option name="September" value="9">September</option>
+                    <option name="October" value="10">October</option>
+                    <option name="November" value="11">November</option>
+                    <option name="December" value="12">December</option>
+                </select> </p>
+            </div>
+        </body>
+        ]]>
+    </Content>
+</Module>

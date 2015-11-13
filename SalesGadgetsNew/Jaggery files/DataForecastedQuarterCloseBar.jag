@@ -1,0 +1,45 @@
+<%
+var DataProductPipeline=[];
+
+if(request.getMethod() == "POST"){
+ var Quarter=request.getParameter("quarter");
+ //var snapdate = request.getParameter("today");
+}
+    
+/*    
+    var queryOpenBest =  "SELECT sum(Best_Case__c) as 'Amount' FROM OpportunityTrend where QUARTER(Close_Date__c)="+Quarter+" and Opportunity_Status__c='Open' and Snapshot_Date__c='"+snapdate+"'";
+    var queryOpenExpected = "SELECT sum(Expected_Case__c) as 'Amount' FROM OpportunityTrend where QUARTER(Close_Date__c)="+Quarter+" and Close_Confidence__c='Normal' and Opportunity_Status__c='Open' and Snapshot_Date__c='"+snapdate+"'";
+    var queryOpenWorst = "SELECT sum(Worst_Case__c) as 'Amount' FROM OpportunityTrend where QUARTER(Close_Date__c)="+Quarter+" and Close_Confidence__c='high' and Opportunity_Status__c='Open' and Snapshot_Date__c='"+snapdate+"'";
+*/
+    var queryClosedWon =  "SELECT sum(Amount) as 'Amount' FROM SF_OPPORTUNITY where QUARTER(DATE_FORMAT(from_unixtime(floor(_timestamp / 1000)),'%Y-%m-%d %H:%i'))="+Quarter+" AND IsClosed='true' AND IsWon='true' and AND DATE_FORMAT(from_unixtime(floor(_timestamp / 1000)),'%Y-%m-%d %H:%i') = (select max(DATE_FORMAT(from_unixtime(floor(_timestamp / 1000)), '%Y-%m-%d %H:%i')) FROM SF_OPPORTUNITY)";
+    var queryOpen = "SELECT sum(Best_Case_Amount__c) as 'BestCase',sum(Expected_Case_Amount__c) as 'ExpectedCase',sum(Worse_Case_Amount__c) as 'WorstCase' FROM SF_OPPORTUNITY where QUARTER(DATE_FORMAT(from_unixtime(floor(_timestamp / 1000)),'%Y-%m-%d %H:%i'))="+Quarter+" and IsClosed='true' and AND DATE_FORMAT(from_unixtime(floor(_timestamp / 1000)),'%Y-%m-%d %H:%i') = (select max(DATE_FORMAT(from_unixtime(floor(_timestamp / 1000)), '%Y-%m-%d %H:%i')) FROM SF_OPPORTUNITY)";
+
+
+
+
+var DataProductPipeline=[];
+var db = new Database("jdbc:mysql://192.168.8.35/sf", "sf", "sf!23");
+//var db = new Database("jdbc:mysql://localhost:3306/sf", "root", "root");
+try{
+    
+/*    var resultOpenBest = db.query(queryOpenBest);
+    var resultOpenExpected = db.query(queryOpenExpected);
+    var resultOpenWorst = db.query(queryOpenWorst);*/
+
+    var resultOpen = db.query(queryOpen);
+    var resultClosedWon = db.query(queryClosedWon);
+    
+    var closedWon = resultClosedWon[0].Amount;
+    
+    DataProductPipeline[0] = [((resultOpen[0].BestCase+closedWon)/1000000.0),"Best"];
+    DataProductPipeline[1] = [((resultOpen[0].ExpectedCase+closedWon)/1000000.0),"Expected"];
+    DataProductPipeline[2] = [((resultOpen[0].WorstCase+closedWon)/1000000.0),"Worst"];
+
+}
+catch(e){
+    
+}
+response.addHeader("Access-Control-Allow-Origin", "*");
+print(stringify(DataProductPipeline));
+
+%>

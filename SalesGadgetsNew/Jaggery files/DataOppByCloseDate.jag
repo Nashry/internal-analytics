@@ -1,0 +1,34 @@
+<%
+var log = new Log();
+log.info("This is the Data file for Jenkins table gadget");
+
+        var today = new Date();
+        var todayStr = today.toISOString().substring(0,10);
+        //querystringOpp will be null cz OwnerName is not available in op yet.//OwnerName,
+        var querystringOpp =  "SELECT  op.OwnerName,from_unixtime(op._timestamp) as RecordDate, op.CloseDate, ac.Region__c as Region, ac.BillingCountry, op.StageName, op.Amount, op.ThisMonth, op.NextMonth, op.ThisQuarter,op.NextQuarter, op.ThisYear, op.NextYear FROM SF_ACCOUNT ac, SF_OPPORTUNITY op where op.IsClosed ='false' limit 0,1000";
+log.info("after opphis query");
+        var querystringWon =  "SELECT AccountID, Amount, StageName, OwnerName, CloseDate, OppEndDate FROM SF_OPPORTUNITY WHERE IsWon = true AND CloseDate != null AND Opp_End_Date__c != null AND from_unixtime(op._timestamp) ='" + todayStr + "'  ORDER BY CloseDate ASC";
+        
+        var DataOpp = [];
+        var DataWon = [];
+
+        try {
+            var db = new Database("jdbc:mysql://192.168.8.35/sf", "sf", "sf!23");
+            var result = db.query(querystringOpp);
+            for (var i = 0; i < result.length; i++) {
+                amount = Math.ceil(Number(result[i].Amount));
+                DataOpp[i] = [result[i].OwnerName, result[i].RecordDate.toString(), result[i].CloseDate.toString(), amount, result[i].ThisMonth, result[i].NextMonth, result[i].ThisQuarter, result[i].NextQuarter, result[i].ThisYear, result[i].NextYear, result[i].Region, result[i].StageName];
+            }
+            
+            result = db.query(querystringWon);
+            for (var i = 0; i < result.length; i++) {
+                DataWon[i] = [result[i].AccountID, result[i].Amount, result[i].StageName, result[i].OwnerName, result[i].CloseDate.toString(), result[i].OppEndDate.toString()];
+            }
+        } catch (err) {
+            //console.log(err);
+        } 
+var variable = {DataOp: DataOpp,DataWo:DataWon};
+
+response.addHeader("Access-Control-Allow-Origin", "*");
+print((variable));
+%>

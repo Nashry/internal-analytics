@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+    <ModulePrefs title="Forecasted Quarter Close (bookings+pipeline)" height="250" description="forecastedQuarterCloseBar">
+        <Require feature="pubsub-2">
+            <Param name="topics">
+                <![CDATA[
+                <Topic title="geodata"
+                    name="org.wso2.ues.samples2.ch"
+                    description="sample channel to demonstrate intergadget communication"
+                    type="object"
+                    subscribe="true"/>
+               ]]>
+            </Param>
+        </Require>
+        <Require feature="dynamic-height"/>
+    </ModulePrefs>
+    <Content type="html">
+        <![CDATA[
+        <head>
+            <link rel="stylesheet" href="/portal/css/igviz.css">
+            <link rel="stylesheet" href="/portal/css/bootstrap.min.css">
+            <link rel="stylesheet" href="/portal/css/charts.css">
+            <script src="/portal/js/jquery.min.js"></script>
+            <script src="/portal/js/bootstrap.min.js"></script>
+            <script src="/portal/js/date.js"></script>
+            <script src="/portal/js/d3.min.js"> </script>
+            <script src="/portal/js/vega.js"> </script>
+            <script src="/portal/js/igviz.js"> </script>
+            <script language="javascript" type="text/javascript" src="/portal/js/jquery-1.10.2.js"></script>
+            <script>
+               
+            //Date manipulation-----------------
+            //getting today's date
+                var today = new Date();
+                var dd = today.getDate();
+                var mm = today.getMonth()+1; //January is 0!
+                var yyyy = today.getFullYear();
+
+                if(dd<10) {
+                    dd='0'+dd
+                } 
+                if(mm<10) {
+                    mm='0'+mm
+                } 
+                StringToday = mm+'/'+dd+'/'+yyyy;
+                var quarter = Math.floor((today.getMonth() + 3) / 3);
+
+            //for now since we dont have data for everyday
+               // today='2015-09-12';
+            //End of Date manipulation----------
+
+            //POST data to hosted jaggery files
+                $.post( "http://10.100.4.35:9763/SalesGadgets/DataForecastedQuarterCloseBar.jag", 
+                        {"quarter":quarter,"today":today},
+                        function( data ) {
+                        DrawGraph(data);
+                        }
+                );
+
+            //function to draw graph
+                function DrawGraph(DataProduct)
+                {                             
+                    console.log('starting the script');
+                //Get the data from hosted jaggery files and parse it
+                    var newDataProduct = JSON.parse(DataProduct);
+        
+                    var dataTableProduct= {
+                                            "metadata":{
+                                                "names":["Amount","OpenConfidence"],
+                                                "types":['N','C']
+                                            },
+                                            "data": newDataProduct
+                                    }
+                                    console.log('this is the product data'+newDataProduct);
+
+                //set height and width of the chart
+                    var width= 250;
+                    var height = 250;
+
+                    var configProduct ={
+                                            "title": "Forecasted Quarter Close",
+                                             "yAxis": 0,
+                                            "xAxis": 1,
+                                            "groupedBy":1,
+                                            "width": width,
+                                            "height": height,
+                                            "chartType": "bar",
+                                            "padding" : "5px",
+                                            "orientation":"H"
+                                        }
+                    console.log('Draw table');
+
+                //Drawing horizontal bar chart in the div id=quarterClose
+                    chart=igviz.setUp("#quarterClose",configProduct,dataTableProduct);
+                    chart.setYAxis({title: "",titleDy:-30});
+                    chart.setXAxis({"title":"Amount  ($millions)"});
+                    chart.plot(dataTableProduct.data)
+                }
+
+            </script>
+        <head>
+        <body padding="0px">
+            <div id="quarterClose" class="col-lg-6" align="left" style="padding:0px;width:300px"></div>
+            </body>
+        ]]>
+    </Content>
+</Module>

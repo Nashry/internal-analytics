@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+    <ModulePrefs title="oppValueByCloseDate" height="250" description="sub-productBar">
+        <Require feature="pubsub-2">
+            <Param name="topics">
+                <![CDATA[
+                <Topic title="geodata"
+                    name="org.wso2.ues.samples2.ch"
+                    description="sample channel to demonstrate intergadget communication"
+                    type="object"
+                    subscribe="true"/>
+               ]]>
+            </Param>
+        </Require>
+        <Require feature="dynamic-height"/>
+    </ModulePrefs>
+    <Content type="html">
+        <![CDATA[
+        <head>
+            <link rel="stylesheet" href="/portal/css/igviz.css">
+            <link rel="stylesheet" href="/portal/css/bootstrap.min.css">
+            <link rel="stylesheet" href="/portal/css/charts.css">
+            <script src="/portal/js/jquery.min.js"></script>
+            <script src="/portal/js/bootstrap.min.js"></script>
+            <script src="/portal/js/date.js"></script>
+            <script src="/portal/js/d3.min.js"> </script>
+            <script src="/portal/js/vega.js"> </script>
+            <script src="/portal/js/igviz.js"> </script>
+            <script language="javascript" type="text/javascript" src="/portal/js/jquery-1.10.2.js"></script>
+            <script>
+            //POST data to hosted jaggery files
+                $.post( "http://10.100.4.35:9763/SalesGadgets/DataOppByCloseDate.jag",{}, function( data ) {
+                    //Get the data from hosted jaggery files and parse it
+                        var result = JSON.parse(data);
+                        DrawGraph(result["DataOp"]);
+                                            
+                });
+            //function to draw graph
+                function DrawGraph(records)
+                {
+                    var chartData = []; // Holds Opportunity Records for today; Used for Bar charts
+                    var stageData = []; // Holds Opportunity Records for the day per Stage, per Time bucket; Used for tables;
+                    var histData = [];  // Holds Historic Opportunity Records; Used for line charts
+                    var amount = 0;
+                    var j = 0;
+                    var k = 0;
+                    var date = new Date();
+                    var today = new Date('2015-08-11');
+
+                    var recorddate = new Date();
+                    var firstdayMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+                    var tmrDate = new Date(date.getFullYear(), date.getMonth()+3, 1);
+                    var monthNames = ["January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December"];
+                    
+                    for (var i = 0; i < records.length; i++) {
+                        recorddate = Date.parse(records[i][1]);
+                        if (recorddate.toDateString() == today.toDateString()) {
+                            
+                            date = Date.parse(records[i][2]);
+                            amount = Math.ceil(Number(records[i][3]));
+                            if (isNaN(amount)){
+                                amount=0;
+                            }
+                            if (records[i][8] == 1) {
+                                if (records[i][4] == 1) {
+                                    monthStr = "Current Month ("+monthNames[today.getMonth()]+")";
+                                    stageData[k++] = [records[i][11], monthStr, amount, 1, date, records[i][0], records[i][10]];
+                                }
+                                if (records[i][6] ==1) {
+                                    qtrStr = "Current Quarter (Q"+Math.floor((date.getMonth() + 3) / 3)+")";
+                                    stageData[k++] = [records[i][11], qtrStr, amount, 1, date, records[i][0], records[i][10]];
+                                }
+                                if (records[i][7] ==1) {
+                                    qtrStr = "Next Quarter (Q"+Math.floor((date.getMonth() + 3) / 3)+")";   
+                                    stageData[k++] = [records[i][11], qtrStr, amount, 1, date, records[i][0], records[i][10]];
+                                }
+                                if ((today < date) && (date < tmrDate)) {
+                                    stageData[k++] = [records[i][11], 'Three Month Rolling', amount, 1, date, records[i][0], records[i][10]];
+                                }
+                            }
+                        }
+                    }
+                    
+                // Drawing Time Bucket Tables
+                    stageData.sort(function(a,b) { 
+                            return a[1] > b[1] ? 1 : -1;
+                        } );                    
+
+                    console.log('starting the script');
+                    var stages= {
+                                            "metadata":{
+                                                "names":["Stage", "Qualifier", "Amount", "Count", "Close Date", "AM"],
+                                                "types":['C','C','N','N', 'U','C']
+                                            },
+                                            "data": stageData 
+                                        }
+                //set height and width of the chart                
+                    var width=300;
+                    var height = 270;               
+
+                    var oppTimeValConfig = {
+                        "title": "Opportunity Value per Time Bucket",
+                        "padding": 60,
+                        "width": 600,
+                        "height": 500,
+                        "rowIndex":0,
+                        "columnIndex":1,
+                        "cellIndex":2,
+                        "aggregate":"sum",
+                        "chartType": "table",
+                        "colorBasedStyle": true
+                    }
+                //Drawing table in the div id=oppAmtTime
+                    igviz.draw("#oppAmtTime",oppTimeValConfig,stages);
+
+                }
+            </script>
+        <head>
+        <body padding="0px">          
+            <div id="oppAmtTime" class="col-lg-6" align="left" style="padding:0px;width:500px"></div>
+            </body>
+        ]]>
+    </Content>
+</Module>

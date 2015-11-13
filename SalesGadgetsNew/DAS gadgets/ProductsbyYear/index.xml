@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+    <ModulePrefs title="Products by Year" height="250" description="sub-productBar">
+        <Require feature="pubsub-2">
+            <Param name="topics">
+                <![CDATA[
+                <Topic title="geodata"
+                    name="org.wso2.ues.samples2.ch"
+                    description="sample channel to demonstrate intergadget communication"
+                    type="object"
+                    subscribe="true"/>
+               ]]>
+            </Param>
+        </Require>
+        <Require feature="dynamic-height"/>
+    </ModulePrefs>
+    <Content type="html">
+        <![CDATA[
+        <head>
+            <link rel="stylesheet" href="/portal/css/igviz.css">
+            <link rel="stylesheet" href="/portal/css/bootstrap.min.css">
+            <link rel="stylesheet" href="/portal/css/charts.css">
+            <script src="/portal/js/jquery.min.js"></script>
+            <script src="/portal/js/bootstrap.min.js"></script>
+            <script src="/portal/js/date.js"></script>
+            <script src="/portal/js/d3.min.js"> </script>
+            <script src="/portal/js/vega.js"> </script>
+            <script src="/portal/js/igviz.js"> </script>
+            <script language="javascript" type="text/javascript" src="/portal/js/jquery-1.10.2.js"></script>
+            <script>
+                var input = [];
+                gadgets.HubSettings.onConnect = function() {
+                //subscribe to channel to get data
+                	gadgets.Hub.subscribe('state-selected', function(topic, data, subscriberData) {
+                        input[0]=data.year;
+                    //POST data to hosted jaggery files
+                  		$.post( "http://10.100.4.35:9763/SalesGadgets/DataProducts.jag", 
+                            {"entYear":input[0]},function( data ) {
+                                DrawGraph(data);
+                        });
+                    });
+                };
+
+                //function to draw graph
+                function DrawGraph(DataProduct){                             
+                    console.log('starting the script');
+                //Get the data from hosted jaggery files and parse it
+                    var newDataProduct = JSON.parse(DataProduct);
+                    var dataTableProduct= {
+                                            "metadata":{
+                                                "names":["Products_in_use__c","Count"],
+                                                "types":['C','N']
+                                            },
+                                            "data": newDataProduct
+                                    }
+                //set height and width of the chart
+                    var width= 370;
+                    var height = 300;
+
+                    console.log('this is the product data'+newDataProduct);
+                    var configProduct ={
+                                            "title": "Products",
+                                             "yAxis": 1,
+                                            "xAxis": 0,
+                                            "groupedBy":0,
+                                            "width": width,
+                                            "height": height,
+                                            "chartType": "bar",
+                                            "padding" : "5px"
+                                        }
+                    console.log('Draw table');
+                //Drawing bar chart in the div id=products 
+                    chart=igviz.setUp("#products",configProduct,dataTableProduct);
+                    chart.setYAxis({title: "Count",titleDy:-30});
+                    chart.setXAxis({"title":"Products Used"});
+                    chart.plot(dataTableProduct.data)
+                }
+            </script>
+        <head>
+        <body padding="0px">
+
+            <div id="products" class="col-lg-6" align="left" style="padding:0px;width:300px"></div>
+            </body>
+        ]]>
+    </Content>
+</Module>
